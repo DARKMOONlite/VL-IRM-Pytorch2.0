@@ -1,10 +1,8 @@
 // Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
+#include <ATen/cuda/Atomic.cuh>
 
-#include <THC/THC.h>
-#include <THC/THCAtomics.cuh>
-#include <THC/THCDeviceUtils.cuh>
 
 // TODO make it in a common file
 #define CUDA_1D_KERNEL_LOOP(i, n)                            \
@@ -243,10 +241,10 @@ __global__ void RoIAlignBackwardFeature(const int nthreads, const T* top_diff,
 
         if (x_low >= 0 && x_high >= 0 && y_low >= 0 && y_high >= 0)
         {
-          atomicAdd(offset_bottom_diff + y_low * width + x_low, static_cast<T>(g1));
-          atomicAdd(offset_bottom_diff + y_low * width + x_high, static_cast<T>(g2));
-          atomicAdd(offset_bottom_diff + y_high * width + x_low, static_cast<T>(g3));
-          atomicAdd(offset_bottom_diff + y_high * width + x_high, static_cast<T>(g4));
+          gpuAtomicAdd(offset_bottom_diff + y_low * width + x_low, static_cast<T>(g1));
+          gpuAtomicAdd(offset_bottom_diff + y_low * width + x_high, static_cast<T>(g2));
+          gpuAtomicAdd(offset_bottom_diff + y_high * width + x_low, static_cast<T>(g3));
+          gpuAtomicAdd(offset_bottom_diff + y_high * width + x_high, static_cast<T>(g4));
         } // if
       } // ix
     } // iy
@@ -272,11 +270,11 @@ at::Tensor ROIAlign_forward_cuda(const at::Tensor& input,
   auto output_size = num_rois * pooled_height * pooled_width * channels;
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  dim3 grid(std::min(THCCeilDiv(output_size, 512L), 4096L));
+  dim3 grid(std::min((output_size + 512L - 1) / 512L, 4096L));
   dim3 block(512);
 
   if (output.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
     return output;
   }
 
@@ -294,7 +292,7 @@ at::Tensor ROIAlign_forward_cuda(const at::Tensor& input,
          rois.contiguous().data_ptr<scalar_t>(),
          output.data_ptr<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+  AT_CUDA_CHECK(cudaGetLastError());
   return output;
 }
 
@@ -317,12 +315,12 @@ at::Tensor ROIAlign_backward_cuda(const at::Tensor& grad,
 
   cudaStream_t stream = at::cuda::getCurrentCUDAStream();
 
-  dim3 grid(std::min(THCCeilDiv(grad.numel(), 512L), 4096L));
+  dim3 grid(std::min((grad.numel() + 512L - 1) / 512L, 4096L));
   dim3 block(512);
 
   // handle possibly empty gradients
   if (grad.numel() == 0) {
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
     return grad_input;
   }
 
@@ -341,6 +339,6 @@ at::Tensor ROIAlign_backward_cuda(const at::Tensor& grad,
          grad_input.data_ptr<scalar_t>(),
          rois.contiguous().data_ptr<scalar_t>());
   });
-  THCudaCheck(cudaGetLastError());
+  AT_CUDA_CHECK(cudaGetLastError());
   return grad_input;
 }

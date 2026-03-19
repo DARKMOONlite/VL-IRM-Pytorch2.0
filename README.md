@@ -3,14 +3,15 @@
 ## Installation and Setup
 
 ***Environment.***
-This repo requires Pytorch>=1.9 and torchvision.
+This repo requires Pytorch>=2.0 and torchvision.
 
 Then install the following packages:
-```
+```bash
 pip install einops shapely timm yacs tensorboardX ftfy prettytable pymongo 
 pip install transformers 
 pip install SceneGraphParser spacy 
-python setup.py build develop --user
+pip install -e . --no-build-isolation
+# python setup.py build develop --user
 ```
 
 ***Pre-trained Visual-Semantic Space.*** Download the pre-trained `GLIP-T` and `GLIP-L` [checkpoints](https://github.com/microsoft/GLIP#model-zoo) into the ``MODEL`` folder. 
