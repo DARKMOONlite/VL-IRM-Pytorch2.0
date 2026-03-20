@@ -3,7 +3,7 @@
 ## Installation and Setup
 
 ***Environment.***
-This repo requires Pytorch>=2.0 and torchvision.
+This repo requires Pytorch>=2.0 and torchvision. (I used 2.5)
 
 Then install the following packages:
 ```bash
@@ -18,8 +18,8 @@ pip install -e . --no-build-isolation
 (!! GLIP has updated the downloading paths, please find these checkpoints following https://github.com/microsoft/GLIP#model-zoo)
 ```
 mkdir MODEL
-wget https://penzhanwu2bbs.blob.core.windows.net/data/GLIPv1_Open/models/glip_tiny_model_o365_goldg_cc_sbu.pth -O swin_tiny_patch4_window7_224.pth
-wget https://penzhanwu2bbs.blob.core.windows.net/data/GLIPv1_Open/models/glip_large_model.pth -O swin_large_patch4_window12_384_22k.pth
+wget https://huggingface.co/harold/GLIP/blob/main/glip_tiny_model_o365_goldg_cc_sbu.pth -O swin_tiny_patch4_window7_224.pth
+wget https://huggingface.co/GLIPModel/GLIP/resolve/main/glip_large_model.pth -O swin_large_patch4_window12_384_22k.pth
 ```
 
 ## Dataset Preparation
